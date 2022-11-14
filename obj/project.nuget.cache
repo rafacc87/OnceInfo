@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "P+n5wMsZ9JjpgSoWmOLVMIydqsZWufOerTqOk4sWXtAHRuHqmAljz/2d56kez+fxeOZm55Cf41cUjqFIRAg+bw==",
+  "success": true,
+  "projectFilePath": "C:\\wamp64\\www\\.NET\\OnceInfo\\OnceInfo.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Patterson\\.nuget\\packages\\htmlagilitypack\\1.11.46\\htmlagilitypack.1.11.46.nupkg.sha512"
+  ],
+  "logs": []
+}
