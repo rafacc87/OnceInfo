@@ -1,20 +1,24 @@
 {
   "format": 1,
   "restore": {
-    "C:\\wamp64\\www\\.NET\\OnceInfo\\OnceInfo.csproj": {}
+    "D:\\Repositorios\\OnceInfo\\OnceInfo\\OnceInfo.csproj": {}
   },
   "projects": {
-    "C:\\wamp64\\www\\.NET\\OnceInfo\\OnceInfo.csproj": {
+    "D:\\Repositorios\\OnceInfo\\OnceInfo\\OnceInfo.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\wamp64\\www\\.NET\\OnceInfo\\OnceInfo.csproj",
+        "projectUniqueName": "D:\\Repositorios\\OnceInfo\\OnceInfo\\OnceInfo.csproj",
         "projectName": "OnceInfo",
-        "projectPath": "C:\\wamp64\\www\\.NET\\OnceInfo\\OnceInfo.csproj",
-        "packagesPath": "C:\\Users\\Patterson\\.nuget\\packages\\",
-        "outputPath": "C:\\wamp64\\www\\.NET\\OnceInfo\\obj\\",
+        "projectPath": "D:\\Repositorios\\OnceInfo\\OnceInfo\\OnceInfo.csproj",
+        "packagesPath": "C:\\Users\\Rafael\\.nuget\\packages\\",
+        "outputPath": "D:\\Repositorios\\OnceInfo\\OnceInfo\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "D:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "C:\\Users\\Patterson\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Rafael\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -61,7 +65,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.400\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.402\\RuntimeIdentifierGraph.json"
         }
       }
     }
