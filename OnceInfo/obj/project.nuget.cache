@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "NRVBzpyd3cud+/H6OT4zw4wHSwGUOLtJbpzyCLWQ9YEzoGHWQhqaoOYzbvpD9ZVRI3nJbdEw7PtwXLsqlMQTPA==",
+  "success": true,
+  "projectFilePath": "D:\\Repositorios\\OnceInfo\\OnceInfo\\OnceInfo.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Rafael\\.nuget\\packages\\htmlagilitypack\\1.11.46\\htmlagilitypack.1.11.46.nupkg.sha512"
+  ],
+  "logs": []
+}

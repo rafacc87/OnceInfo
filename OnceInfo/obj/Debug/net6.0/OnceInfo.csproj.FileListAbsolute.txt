@@ -1,0 +1,17 @@
+D:\Repositorios\OnceInfo\OnceInfo\bin\Debug\net6.0\OnceInfo.exe
+D:\Repositorios\OnceInfo\OnceInfo\bin\Debug\net6.0\OnceInfo.deps.json
+D:\Repositorios\OnceInfo\OnceInfo\bin\Debug\net6.0\OnceInfo.runtimeconfig.json
+D:\Repositorios\OnceInfo\OnceInfo\bin\Debug\net6.0\OnceInfo.dll
+D:\Repositorios\OnceInfo\OnceInfo\bin\Debug\net6.0\OnceInfo.pdb
+D:\Repositorios\OnceInfo\OnceInfo\bin\Debug\net6.0\HtmlAgilityPack.dll
+D:\Repositorios\OnceInfo\OnceInfo\obj\Debug\net6.0\OnceInfo.csproj.AssemblyReference.cache
+D:\Repositorios\OnceInfo\OnceInfo\obj\Debug\net6.0\OnceInfo.GeneratedMSBuildEditorConfig.editorconfig
+D:\Repositorios\OnceInfo\OnceInfo\obj\Debug\net6.0\OnceInfo.AssemblyInfoInputs.cache
+D:\Repositorios\OnceInfo\OnceInfo\obj\Debug\net6.0\OnceInfo.AssemblyInfo.cs
+D:\Repositorios\OnceInfo\OnceInfo\obj\Debug\net6.0\OnceInfo.csproj.CoreCompileInputs.cache
+D:\Repositorios\OnceInfo\OnceInfo\obj\Debug\net6.0\OnceInfo.csproj.CopyComplete
+D:\Repositorios\OnceInfo\OnceInfo\obj\Debug\net6.0\OnceInfo.dll
+D:\Repositorios\OnceInfo\OnceInfo\obj\Debug\net6.0\refint\OnceInfo.dll
+D:\Repositorios\OnceInfo\OnceInfo\obj\Debug\net6.0\OnceInfo.pdb
+D:\Repositorios\OnceInfo\OnceInfo\obj\Debug\net6.0\OnceInfo.genruntimeconfig.cache
+D:\Repositorios\OnceInfo\OnceInfo\obj\Debug\net6.0\ref\OnceInfo.dll
