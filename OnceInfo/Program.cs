@@ -5,6 +5,10 @@ namespace OnceInfo
 {
     internal class Program
     {
+        // Configuraciones
+        private static bool nomin = false;
+        private static int top = 0;
+
         private static string urlOnce = "https://www.juegosonce.es";
         private static string urlBaseRascas = urlOnce + "/rascas-todos";
         private static string nodoListadoRascas = "//*[@id=\"lstRascasTodos\"]/li/a";
@@ -19,6 +23,8 @@ namespace OnceInfo
 
         static void Main(string[] args)
         {
+            ReadParams(args);
+
             Console.WriteLine("¡Bienvenido a OnceInfo!");
             Console.WriteLine();
 
@@ -43,15 +49,27 @@ namespace OnceInfo
                 string precio = link.SelectSingleNode(nodoPrecioListadoRascas).GetAttributeValue("data-precio", string.Empty);
                 resultados.AddRange(GetRascaResultado(link.GetAttributeValue("href", string.Empty), precio));
             }
-            resultados = resultados.OrderByDescending(x => x.PorcentajePremio).Take(10).ToList();
 
             Console.WriteLine();
             Console.WriteLine("> Completado");
 
-            Console.WriteLine("Aquí tienes los resultados:");
+            if (top > 0)
+            {
+                resultados = resultados.OrderByDescending(x => x.PorcentajePremio).Take(top).ToList();
+
+                Console.WriteLine($"Aquí tienes el top {top}:");
+            }
+            else
+            {
+                resultados = resultados.OrderByDescending(x => x.PorcentajePremio).ToList();
+
+                Console.WriteLine("Aquí tienes todos los resultados:");
+            }
+
+            int i = 0;
             foreach(var r in resultados)
             {
-                Console.WriteLine($"> {r.Nombre} con precio {r.Precio}€ tiene una probabilidad de {decimal.Round(r.PorcentajePremio, 2, MidpointRounding.AwayFromZero)}");
+                Console.WriteLine($"{++i} > {r.Nombre} con precio {r.Precio} euros tiene una probabilidad de {decimal.Round(r.PorcentajePremio, 2, MidpointRounding.AwayFromZero)}");
             }
         }
 
@@ -83,6 +101,12 @@ namespace OnceInfo
                     int rascasPremiados = 0;
                     foreach (var premio in premios)
                     {
+                        // Descarta los premios del mismo valor de coste del rasca
+                        if (nomin)
+                        {
+                            string premioDe = premio.SelectSingleNode("./span").InnerHtml;
+                            if (premioDe.Contains(precios[i] + " €")) break;
+                        }
                         string texto = premio.InnerHtml;
                         texto = texto.Substring(0, texto.IndexOf(" ")).Replace(".", "");
                         rascasPremiados += int.Parse(texto);
@@ -106,6 +130,43 @@ namespace OnceInfo
         {
             HtmlWeb web = new();
             return web.Load(url);
+        }
+
+        private static void ReadParams(string[] args)
+        {
+            if (!args.Any()) return;
+
+            string conf = "";
+            foreach (string arg in args)
+            {
+                if (string.IsNullOrEmpty(conf))
+                {
+                    conf = arg;
+
+                    switch(conf)
+                    {
+                        case "/t":
+                            break;
+                        case "/nomin":
+                            conf = "";
+                            nomin = true;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                else
+                {
+                    switch (conf)
+                    {
+                        case "/t":
+                            top = int.Parse(arg);
+                            break;
+                    }
+
+                    conf = "";
+                }
+            }
         }
     }
 }
