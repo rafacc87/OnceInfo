@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "OnceInfo": {
+      "commandName": "Project",
+      "commandLineArgs": "/t 20 /nomin"
+    }
+  }
+}
