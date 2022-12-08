@@ -1,0 +1,9 @@
+﻿################################################################################
+# Este archivo .gitignore ha sido creado automáticamente por Microsoft(R) Visual Studio.
+################################################################################
+
+/OnceInfo/bin/Debug/net6.0
+/OnceInfo/obj
+/.vs/OnceInfo/FileContentIndex
+*.suo
+*.v2
