@@ -7,3 +7,5 @@
 /.vs/OnceInfo/FileContentIndex
 *.suo
 *.v2
+/OnceInfo/bin/Release/net6.0
+/OnceInfo/OnceInfo.csproj.user
