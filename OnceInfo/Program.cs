@@ -8,6 +8,7 @@ namespace OnceInfo
         // Configuraciones
         private static bool nomin = false;
         private static int top = 0;
+        private static bool euroGastado = false; // Euro gastado o papeleta comprada
 
         private static string urlOnce = "https://www.juegosonce.es";
         private static string urlBaseRascas = urlOnce + "/rascas-todos";
@@ -53,17 +54,19 @@ namespace OnceInfo
             Console.WriteLine();
             Console.WriteLine("> Completado");
 
+            string tipoProbabilidad = euroGastado ? "por euro gastado" : "por cupón";
+
             if (top > 0)
             {
                 resultados = resultados.OrderByDescending(x => x.PorcentajePremio).Take(top).ToList();
 
-                Console.WriteLine($"Aquí tienes el top {top}:");
+                Console.WriteLine($"Aquí tienes el top {top} {tipoProbabilidad}:");
             }
             else
             {
                 resultados = resultados.OrderByDescending(x => x.PorcentajePremio).ToList();
 
-                Console.WriteLine("Aquí tienes todos los resultados:");
+                Console.WriteLine("Aquí tienes todos los resultados {tipoProbabilidad}:");
             }
 
             int i = 0;
@@ -112,13 +115,24 @@ namespace OnceInfo
                         rascasPremiados += int.Parse(texto);
                     }
 
-                    list.Add(new RascaResultado() { 
-                        Nombre = nombre, 
-                        Serie = serie, 
-                        Precio = precios[i], 
-                        RascasPremiados = rascasPremiados, 
-                        PorcentajePremio = rascasPremiados * 100 / decimal.Parse(serie.Replace(".", ""))
-                    });
+                    var rasca = new RascaResultado()
+                    {
+                        Nombre = nombre,
+                        Serie = serie,
+                        Precio = precios[i],
+                        RascasPremiados = rascasPremiados,
+                    };
+
+                    if (euroGastado)
+                    {
+                        rasca.PorcentajePremio = rascasPremiados * 100 / (decimal.Parse(precios[i].Replace(".", "")) * decimal.Parse(serie.Replace(".", "")));
+                    }
+                    else
+                    {
+                        rasca.PorcentajePremio = rascasPremiados * 100 / decimal.Parse(serie.Replace(".", ""));
+                    }
+
+                    list.Add(rasca);
                     i++;
                 }
             }
@@ -150,6 +164,10 @@ namespace OnceInfo
                         case "/nomin":
                             conf = "";
                             nomin = true;
+                            break;
+                        case "/euro":
+                            conf = "";
+                            euroGastado = true; 
                             break;
                         default:
                             break;
