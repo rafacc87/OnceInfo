@@ -2,7 +2,7 @@
   "profiles": {
     "OnceInfo": {
       "commandName": "Project",
-      "commandLineArgs": "/nomin /t 15 /euro"
+      "commandLineArgs": "/t 20 /nomin /p 50 /euro"
     }
   }
 }
