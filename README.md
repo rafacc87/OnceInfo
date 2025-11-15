@@ -8,3 +8,5 @@ Obtención de los porcentajes por rasca de premio
 ## Argumentos
 - __/t x__. Top rascas o si no se le pasa se obtiene la lista enetera.
 - __/nomin__. Descarga los premios del mismo valor que el rasca.
+- __/euro__. Por euro gastado o sin por cupón.
+- __/p__. Precio mínimo de premio.
