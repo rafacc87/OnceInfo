@@ -1,16 +1,34 @@
 ﻿################################################################################
-# Este archivo .gitignore ha sido creado automáticamente por Microsoft(R) Visual Studio.
+# Visual Studio
 ################################################################################
 
-/OnceInfo/bin/Debug/net6.0
+/OnceInfo/bin
 /OnceInfo/obj
+/.vs/
+/*.suo
+/*.user
+/*.v2
 /.vs/OnceInfo/FileContentIndex
-*.suo
-*.v2
-/OnceInfo/bin/Release/net6.0
-/OnceInfo/OnceInfo.csproj.user
 /.vs/ProjectEvaluation
 /.vs/OnceInfo/config
-/.vs
-/OnceInfo/bin/Debug/net8.0
-/OnceInfo/bin/Release/net8.0
+
+################################################################################
+# Playwright & Node
+################################################################################
+
+# Carpeta de navegadores descargados por Playwright
+.ms-playwright/
+.playwright/
+
+# Node modules si los hubiera
+node_modules/
+
+################################################################################
+# Publicaciones y artefactos
+################################################################################
+
+# Publicaciones locales
+publish-win-x64/
+publish/
+*.zip
+*.exe
