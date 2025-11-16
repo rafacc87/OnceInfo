@@ -12,3 +12,5 @@
 /.vs/ProjectEvaluation
 /.vs/OnceInfo/config
 /.vs
+/OnceInfo/bin/Debug/net8.0
+/OnceInfo/bin/Release/net8.0

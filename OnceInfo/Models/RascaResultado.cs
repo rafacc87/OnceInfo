@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace OnceInfo.Models
 {
-    internal class RascaResultado
+    public class RascaResultado
     {
         public string Nombre { get; set; } = "";
 
