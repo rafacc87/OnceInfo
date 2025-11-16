@@ -17,7 +17,7 @@ namespace OnceInfo
 
         static async Task Main(string[] args)
         {
-            await PlaywrightService.EnsurePlaywrightBrowsersAsync();
+            PlaywrightService.EnsurePlaywrightBrowsers();
             
             ReadParams(args);
 

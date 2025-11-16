@@ -6,35 +6,32 @@ namespace OnceInfo.Services
 {
     public static class PlaywrightService
     {
-        public static async Task EnsurePlaywrightBrowsersAsync()
+        public static void EnsurePlaywrightBrowsers()
         {
-            try
-            {
-                using var playwright = await Playwright.CreateAsync();
-            }
-            catch (PlaywrightException)
-            {
-                Console.WriteLine("> No se han encontrado navegadores Playwright. Descargando navegadores...");
-                var psi = new ProcessStartInfo
-                {
-                    FileName = "powershell",
-                    Arguments = @"-ExecutionPolicy Bypass -File .\playwright.ps1 install",
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
+            string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            string playwrightRoot = Path.Combine(userProfile, "AppData", "Local", "ms-playwright");
 
-                using var process = Process.Start(psi);
-                process.WaitForExit();
-                string output = process.StandardOutput.ReadToEnd();
-                Console.WriteLine(output);
-                Console.WriteLine("> Descarga completada.");
-            }
-            catch (Exception ex)
+            // 1) ¿Ya existen navegadores en la ruta REAL?
+            if (Directory.Exists(playwrightRoot) &&
+                Directory.EnumerateDirectories(playwrightRoot).Any())
             {
-                Console.WriteLine($"> Error comprobando Playwright: {ex.Message}");
-                throw;
+                Console.WriteLine("Playwright ya tiene navegadores instalados.");
+                return;
             }
+
+            Console.WriteLine("Instalando navegadores de Playwright...");
+
+            // 2) Instalar usando API interna (sin PowerShell)
+            Microsoft.Playwright.Program.Main(new[] { "install" });
+
+            // 3) Verificación
+            if (!Directory.Exists(playwrightRoot) ||
+                !Directory.EnumerateDirectories(playwrightRoot).Any())
+            {
+                throw new Exception("Playwright no pudo instalar los navegadores.");
+            }
+
+            Console.WriteLine("Navegadores instalados correctamente.");
         }
 
         public static async Task<HtmlDocument> GetHtmlDocumentAsync(string url, bool headless = true, int timeout = 60000)
