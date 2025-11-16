@@ -46,59 +46,64 @@ on:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        configuration: [Release]
-
+    name: Build Windows
     runs-on: windows-latest
 
-    env:
-      Solution_Name: OnceInfo.sln
-      #Test_Project_Path:
-      #Wap_Project_Directory:
-      #Wap_Project_Path:
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore OnceInfo/OnceInfo.csproj
+
+      - name: Build
+        run: dotnet build OnceInfo/OnceInfo.csproj -c Release --no-restore
+
+      - name: Publish win-x64 self-contained
+        run: >
+          dotnet publish OnceInfo/OnceInfo.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          --output publish-win-x64
+
+      # Instalación de navegadores Playwright dentro del publish
+      - name: Install Playwright browsers
+        run: pwsh publish-win-x64/playwright.ps1 install
+
+      # Empaqueta todo para la release
+      - name: Zip output
+        run: >
+          powershell Compress-Archive -Path publish-win-x64\*
+          -DestinationPath OnceInfo-win-x64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OnceInfo-win-x64
+          path: OnceInfo-win-x64.zip
+
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: windows-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: OnceInfo-win-x64
+          path: .
 
-    - name: Install .NET Core
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 6.0.x
-
-    - name: Setup MSBuild.exe
-      uses: microsoft/setup-msbuild@v2
-
-    - name: Execute unit tests
-      run: dotnet test
-
-    - name: Restore the application
-      run: msbuild $env:Solution_Name /t:Restore /p:Configuration=$env:Configuration
-      env:
-        Configuration: ${{ matrix.configuration }}
-
-    #- name: Decode the pfx
-    #  run: |
-    #    $pfx_cert_byte = [System.Convert]::FromBase64String("${{ secrets.Base64_Encoded_Pfx }}")
-    #    $certificatePath = Join-Path -Path $env:Wap_Project_Directory -ChildPath GitHubActionsWorkflow.pfx
-    #    [IO.File]::WriteAllBytes("$certificatePath", $pfx_cert_byte)
-
-    - name: Create the app package
-      run: msbuild $env:Wap_Project_Path /p:Configuration=$env:Configuration /p:UapAppxPackageBuildMode=$env:Appx_Package_Build_Mode /p:AppxBundle=$env:Appx_Bundle /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:PackageCertificatePassword=${{ secrets.Pfx_Key }}
-      env:
-        Appx_Bundle: Always
-        Appx_Bundle_Platforms: x86|x64
-        Appx_Package_Build_Mode: StoreUpload
-        Configuration: ${{ matrix.configuration }}
-
-    #- name: Remove the pfx
-    #  run: Remove-Item -path $env:Wap_Project_Directory\GitHubActionsWorkflow.pfx
-
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: MSIX Package
-        path: ${{ env.Wap_Project_Directory }}\AppPackages
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: OnceInfo-win-x64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
