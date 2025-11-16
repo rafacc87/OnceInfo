@@ -1,5 +1,9 @@
 ﻿using HtmlAgilityPack;
 using OnceInfo.Models;
+using OnceInfo.Properties;
+using OnceInfo.Services;
+using System.Diagnostics;
+using System.Globalization;
 
 namespace OnceInfo
 {
@@ -11,70 +15,95 @@ namespace OnceInfo
         private static int precioMin = 0;
         private static bool euroGastado = false; // Euro gastado o papeleta comprada
 
-        private static string urlOnce = "https://www.juegosonce.es";
-        private static string urlBaseRascas = urlOnce + "/rascas-todos";
-        private static string nodoListadoRascas = "//*[@id=\"lstRascasTodos\"]/li/a";
-        private static string nodoPrecioListadoRascas = "./span[@class='precio']";
-
-        private static string nodoNombreRasca = "//header/div/div/h2";
-        private static string nodosPRasca = "//div[@class=\"contenido\"]/h3";
-        private static string textoP = "Premios por cada serie de boletos de ";
-        private static string textoMultiP = " con precio";
-        private static string nodosListadoRasca = "//ul[@class='premiosrascas']";
-        private static string nodosPremio = "./li";
-
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
+            PlaywrightService.EnsurePlaywrightBrowsers();
+            
             ReadParams(args);
 
             Console.WriteLine("¡Bienvenido a OnceInfo!");
             Console.WriteLine();
 
             Console.WriteLine("- Obteniendo listado de rascas:");
-            HtmlDocument doc = GetHtml(urlBaseRascas);
+            HtmlDocument doc = await PlaywrightService.GetHtmlDocumentAsync(Resources.Url + Resources.Path_rasca);
             if (doc.GetElementbyId("msgerror") != null)
             {
                 Console.WriteLine($">> No está disponible ahora mismo juegosonce <<");
                 return;
             }
-            HtmlNodeCollection lstRascasTodos = doc.DocumentNode.SelectNodes(nodoListadoRascas);
+            HtmlNodeCollection lstRascasTodos = doc.DocumentNode.SelectNodes(Resources.Nodo_Listado_Rascas);
+
+            // Verifica que se hayan conseguido obtener rascas
+            if (lstRascasTodos == null)
+            {
+                Console.WriteLine($">> Parece que OnceInfo no puede obtener datos de juegosonce <<");
+                return;
+            }
+
             Console.WriteLine($"> Encontrados { lstRascasTodos.Count } rascas.");
-
             Console.WriteLine();
-            Console.WriteLine("- Analizanzo rascas:");
+            Console.WriteLine("- Analizando rascas:");
 
-            List<RascaResultado> resultados = new();
-            int total = lstRascasTodos.Count();
+            var rascaItems = lstRascasTodos.Select(n => new
+            {
+                Href = n.GetAttributeValue("href", string.Empty),
+                Precio = n.SelectSingleNode(Resources.Nodo_Precio_Listado_Rascas).GetAttributeValue("data-precio", string.Empty)
+            }).ToList();
+
+            List<RascaResultado> resultadosCon = new();
+            List<RascaResultado> resultadosSin = new();
+            int total = rascaItems.Count;
             for (int p = 0; p < total; p++)
             {
-                Thread.Sleep(500);
-
+                Thread.Sleep(1000);
                 ShowProgress(p, total);
-                string precio = lstRascasTodos[p].SelectSingleNode(nodoPrecioListadoRascas).GetAttributeValue("data-precio", string.Empty);
-                resultados.AddRange(GetRascaResultado(lstRascasTodos[p].GetAttributeValue("href", string.Empty), precio));
+
+                var item = rascaItems[p];
+                HtmlDocument rascaDoc;
+                try
+                {
+                    rascaDoc = await PlaywrightService.GetHtmlDocumentAsync(Resources.Url + item.Href);
+                }
+                catch (System.Exception ex)
+                {
+                    try
+                    {
+                        Thread.Sleep(5000);
+                        rascaDoc = await PlaywrightService.GetHtmlDocumentAsync(Resources.Url + item.Href, timeout: 90000);
+                    }
+                    catch
+                    {
+                        Console.WriteLine($"\n>> Error cargando {item.Href} tras reintento: {ex.Message}");
+                        continue;
+                    }
+                    continue;
+                }
+
+                resultadosCon.AddRange(ParseRascaResultados(rascaDoc, item.Precio, excludeSameValue: false, precioMinArg: precioMin));
+                resultadosSin.AddRange(ParseRascaResultados(rascaDoc, item.Precio, excludeSameValue: true, precioMinArg: precioMin));
             }
             ShowProgress(total, total);
 
             Console.WriteLine();
             Console.WriteLine("> Completado");
 
+            // Selecciona qué mostrar en consola según la opción /nomin
+            var resultados = nomin ? resultadosSin : resultadosCon;
             string tipoProbabilidad = euroGastado ? "por euro gastado" : "por cupón";
 
             if (top > 0)
             {
                 resultados = resultados.OrderByDescending(x => x.PorcentajePremio).Take(top).ToList();
-
                 Console.WriteLine($"Aquí tienes el top {top} {tipoProbabilidad}:");
             }
             else
             {
                 resultados = resultados.OrderByDescending(x => x.PorcentajePremio).ToList();
-
                 Console.WriteLine($"Aquí tienes todos los resultados {tipoProbabilidad}:");
             }
 
             int i = 0;
-            foreach(var r in resultados)
+            foreach (var r in resultados)
             {
                 string inicio = $"{++i} > {r.Nombre} con precio {r.Precio} euros tiene";
                 decimal porcentaje = decimal.Round(r.PorcentajePremio, 2, MidpointRounding.AwayFromZero);
@@ -84,73 +113,91 @@ namespace OnceInfo
                 else
                     Console.WriteLine($"{inicio} una probabilidad de {porcentaje}%");
             }
+
+            // Genera informe HTML con ambas versiones (con y sin mismo valor) y lo abre
+            var html = HtmlReportGenerator.GenerateReportHtml(resultadosCon, resultadosSin, precioMin);
+            var outPath = Path.Combine(Environment.CurrentDirectory, "onceinfo-report.html");
+            File.WriteAllText(outPath, html, System.Text.Encoding.UTF8);
+            Process.Start(new ProcessStartInfo { FileName = outPath, UseShellExecute = true });
+
             Console.ReadKey();
         }
 
-        private static void ShowProgress(int progresoActual, int total, int size = 26)
+        private static List<RascaResultado> ParseRascaResultados(HtmlDocument doc, string precio, bool excludeSameValue, int precioMinArg)
         {
-            int percent = (progresoActual * 100) / total;
-            int percentBar = (progresoActual * size) / total;
-            string progressBar = new string('█', percentBar) + new string('░', size - percentBar);
-            Console.Write($"\r {progressBar} {percent}%");
-        }
+            var list = new List<RascaResultado>();
+            string nombre = doc.DocumentNode.SelectSingleNode(Resources.Nodo_Nombre_Rasca)?.InnerText?.Trim() ?? string.Empty;
+            var pRasca = doc.DocumentNode.SelectNodes(Resources.Nodos_PRasca);
+            var listadoRasca = doc.DocumentNode.SelectNodes(Resources.Nodos_Listado_Rasca);
+            if (pRasca == null || listadoRasca == null) return list;
 
-        private static List<RascaResultado> GetRascaResultado(string urlRasca, string precio)
-        {
-            List<RascaResultado> list = new();
-            HtmlDocument doc = GetHtml(urlOnce + urlRasca);
-
-            string nombre = doc.DocumentNode.SelectSingleNode(nodoNombreRasca).InnerText;
-            HtmlNodeCollection pRasca = doc.DocumentNode.SelectNodes(nodosPRasca);
-            HtmlNodeCollection listadoRasca = doc.DocumentNode.SelectNodes(nodosListadoRasca);
-
-            // Buscar párrafo de premio
             int i = 0;
             string[] precios = precio.Split(" - ");
+
+            decimal ToDecimal(string s)
+            {
+                if (string.IsNullOrWhiteSpace(s)) return 0;
+                s = s.Trim();
+                var idxSpace = s.IndexOf(' ');
+                if (idxSpace >= 0) s = s.Substring(0, idxSpace);
+                s = s.Replace("€", "").Trim();
+                if (s.Contains(".") && s.Contains(",")) s = s.Replace(".", "").Replace(",", ".");
+                else if (s.Contains(",") && !s.Contains(".")) s = s.Replace(",", ".");
+                else if (!s.Contains(",") && s.Contains("."))
+                {
+                    // si hay punto y más de 2 dígitos tras el punto, asumimos separador de miles
+                    var pos = s.LastIndexOf('.');
+                    if (s.Length - pos - 1 > 2) s = s.Replace(".", "");
+                }
+                s = new string(s.Where(c => char.IsDigit(c) || c == '.' || c == '-').ToArray());
+                if (string.IsNullOrWhiteSpace(s)) return 0;
+                return decimal.Parse(s, CultureInfo.InvariantCulture);
+            }
+
             foreach (var p in pRasca)
             {
                 string serie = p.InnerHtml;
-                if (serie.StartsWith(textoP))
+                if (serie.StartsWith(Resources.TextoP))
                 {
-                    serie = serie[(textoP.Length)..].Replace(":", "");
-                    if (serie.Contains(textoMultiP))
-                    {
+                    serie = serie[(Resources.TextoP.Length)..].Replace(":", "");
+                    if (serie.Contains(Resources.Texto_MultiP))
                         serie = serie[..serie.IndexOf(" ")];
-                    }
 
-                    HtmlNodeCollection premios = listadoRasca[i].SelectNodes(nodosPremio);
+                    if (i >= precios.Length) break; // seguridad
 
+                    var premiosNode = listadoRasca[i].SelectNodes(Resources.Nodos_Premio);
                     decimal totalPremios = 0;
                     int rascasPremiados = 0;
-                    foreach (var premio in premios)
-                    {
-                        string texto = premio.InnerHtml;
-                        texto = texto.Substring(0, texto.IndexOf(" ")).Replace(".", "");
 
-                        string premioDe = premio.SelectSingleNode("./span").InnerHtml;
-                        // Limpiar premioDe
+                    if (premiosNode != null)
+                    {
+                        foreach (var premio in premiosNode)
                         {
+                            string texto = premio.InnerHtml;
+                            texto = texto.Substring(0, texto.IndexOf(" ")).Replace(".", "").Trim();
+
+                            string premioDe = premio.SelectSingleNode("./span").InnerHtml;
                             int indiceEspacio = premioDe.IndexOf(" ");
                             if (indiceEspacio != -1)
-                            {
-                                string subcadena = premioDe[..indiceEspacio];
-                                premioDe = subcadena.Replace(".", "");
-                            }
+                                premioDe = premioDe[..indiceEspacio].Replace(".", "");
                             else
-                            {
                                 premioDe = premioDe.Replace("€", "").Trim();
+
+                            decimal premioDeDec = ToDecimal(premioDe);
+                            decimal precioI = ToDecimal(precios[i]);
+
+                            // Mantiene la lógica original: si se cumple la condición se rompe el bucle de premios
+                            if ((excludeSameValue && premioDeDec == precioI) || (precioMinArg > premioDeDec))
+                            {
+                                break;
+                            }
+
+                            if (int.TryParse(texto, out int veces))
+                            {
+                                rascasPremiados += veces;
+                                totalPremios += premioDeDec * veces;
                             }
                         }
-                        // Descarta los premios del mismo valor de coste del rasca
-                        // Descarta los premios inferiores a precioMin
-                        if (nomin && decimal.Parse(premioDe) == decimal.Parse(precios[i]) || 
-                            precioMin > decimal.Parse(premioDe))
-                        {
-                            break;
-                        }
-
-                        rascasPremiados += int.Parse(texto);
-                        totalPremios += decimal.Parse(premioDe) * decimal.Parse(texto);
                     }
 
                     var rasca = new RascaResultado()
@@ -163,11 +210,20 @@ namespace OnceInfo
 
                     if (euroGastado)
                     {
-                        rasca.PorcentajePremio = totalPremios / (decimal.Parse(precios[i].Replace(".", "")) * decimal.Parse(serie.Replace(".", "")));
+                        var priceDecimal = ToDecimal(precios[i]);
+                        var serieDecimal = ToDecimal(serie);
+                        if (priceDecimal != 0 && serieDecimal != 0)
+                            rasca.PorcentajePremio = totalPremios / (priceDecimal * serieDecimal);
+                        else
+                            rasca.PorcentajePremio = 0;
                     }
                     else
                     {
-                        rasca.PorcentajePremio = (rascasPremiados / decimal.Parse(serie.Replace(".", ""))) * 100;
+                        var serieDecimal = ToDecimal(serie);
+                        if (serieDecimal != 0)
+                            rasca.PorcentajePremio = (rascasPremiados / serieDecimal) * 100;
+                        else
+                            rasca.PorcentajePremio = 0;
                     }
 
                     list.Add(rasca);
@@ -178,10 +234,12 @@ namespace OnceInfo
             return list;
         }
 
-        private static HtmlDocument GetHtml(string url)
+        private static void ShowProgress(int progresoActual, int total, int size = 26)
         {
-            HtmlWeb web = new();
-            return web.Load(url);
+            int percent = (progresoActual * 100) / Math.Max(total, 1);
+            int percentBar = (progresoActual * size) / Math.Max(total, 1);
+            string progressBar = new string('█', percentBar) + new string('░', size - percentBar);
+            Console.Write($"\r {progressBar} {percent}%");
         }
 
         private static void ReadParams(string[] args)
@@ -195,7 +253,7 @@ namespace OnceInfo
                 {
                     conf = arg;
 
-                    switch(conf)
+                    switch (conf)
                     {
                         case "/t":
                             break;
@@ -205,7 +263,7 @@ namespace OnceInfo
                             break;
                         case "/euro":
                             conf = "";
-                            euroGastado = true; 
+                            euroGastado = true;
                             break;
                         case "/p":
                             break;
