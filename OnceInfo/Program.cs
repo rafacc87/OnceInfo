@@ -3,7 +3,6 @@ using OnceInfo.Models;
 using OnceInfo.Properties;
 using OnceInfo.Services;
 using System.Diagnostics;
-using System.Globalization;
 
 namespace OnceInfo
 {
@@ -17,9 +16,17 @@ namespace OnceInfo
 
         static async Task Main(string[] args)
         {
+            // Check for debug mode
+            if (args.Contains("/debug"))
+            {
+                Console.WriteLine(">> Modo DEBUG activado - Generando datos de prueba...");
+                GenerateDebugReport();
+                return;
+            }
+
             PlaywrightService.EnsurePlaywrightBrowsers();
-            
-            ReadParams(args);
+
+            (top, nomin, euroGastado, precioMin) = RascaParser.ParseArguments(args);
 
             Console.WriteLine("¡Bienvenido a OnceInfo!");
             Console.WriteLine();
@@ -134,26 +141,6 @@ namespace OnceInfo
             int i = 0;
             string[] precios = precio.Split(" - ");
 
-            decimal ToDecimal(string s)
-            {
-                if (string.IsNullOrWhiteSpace(s)) return 0;
-                s = s.Trim();
-                var idxSpace = s.IndexOf(' ');
-                if (idxSpace >= 0) s = s.Substring(0, idxSpace);
-                s = s.Replace("€", "").Trim();
-                if (s.Contains(".") && s.Contains(",")) s = s.Replace(".", "").Replace(",", ".");
-                else if (s.Contains(",") && !s.Contains(".")) s = s.Replace(",", ".");
-                else if (!s.Contains(",") && s.Contains("."))
-                {
-                    // si hay punto y más de 2 dígitos tras el punto, asumimos separador de miles
-                    var pos = s.LastIndexOf('.');
-                    if (s.Length - pos - 1 > 2) s = s.Replace(".", "");
-                }
-                s = new string(s.Where(c => char.IsDigit(c) || c == '.' || c == '-').ToArray());
-                if (string.IsNullOrWhiteSpace(s)) return 0;
-                return decimal.Parse(s, CultureInfo.InvariantCulture);
-            }
-
             foreach (var p in pRasca)
             {
                 string serie = p.InnerHtml;
@@ -183,8 +170,8 @@ namespace OnceInfo
                             else
                                 premioDe = premioDe.Replace("€", "").Trim();
 
-                            decimal premioDeDec = ToDecimal(premioDe);
-                            decimal precioI = ToDecimal(precios[i]);
+                            decimal premioDeDec = RascaParser.ToDecimal(premioDe);
+                            decimal precioI = RascaParser.ToDecimal(precios[i]);
 
                             // Mantiene la lógica original: si se cumple la condición se rompe el bucle de premios
                             if ((excludeSameValue && premioDeDec == precioI) || (precioMinArg > premioDeDec))
@@ -208,22 +195,16 @@ namespace OnceInfo
                         RascasPremiados = rascasPremiados,
                     };
 
+                    var priceDecimal = RascaParser.ToDecimal(precios[i]);
+                    var serieDecimal = RascaParser.ToDecimal(serie);
+
                     if (euroGastado)
                     {
-                        var priceDecimal = ToDecimal(precios[i]);
-                        var serieDecimal = ToDecimal(serie);
-                        if (priceDecimal != 0 && serieDecimal != 0)
-                            rasca.PorcentajePremio = totalPremios / (priceDecimal * serieDecimal);
-                        else
-                            rasca.PorcentajePremio = 0;
+                        rasca.PorcentajePremio = RascaParser.CalcularEurosPorEuroGastado(totalPremios, priceDecimal, serieDecimal);
                     }
                     else
                     {
-                        var serieDecimal = ToDecimal(serie);
-                        if (serieDecimal != 0)
-                            rasca.PorcentajePremio = (rascasPremiados / serieDecimal) * 100;
-                        else
-                            rasca.PorcentajePremio = 0;
+                        rasca.PorcentajePremio = RascaParser.CalcularPorcentajePremio(rascasPremiados, serieDecimal);
                     }
 
                     list.Add(rasca);
@@ -234,61 +215,93 @@ namespace OnceInfo
             return list;
         }
 
+        private static void GenerateDebugReport()
+        {
+            var random = new Random();
+            var nombresRascas = new[]
+            {
+                "Rasca Classic", "Rasca Premium", "Rasca Gold", "Rasca Platinum",
+                "Rasca Fortune", "Rasca Lucky", "Rasca Million", "Rasca Deluxe",
+                "Rasca Royal", "Rasca Star", "Rasca Diamond", "Rasca Emerald",
+                "Rasca Ruby", "Rasca Sapphire", "Rasca Bronze", "Rasca Silver"
+            };
+
+            var precios = new[] { "1", "2", "3", "5", "10" };
+            var series = new[] { "50.000", "100.000", "200.000", "500.000", "1.000.000" };
+
+            var resultadosCon = new List<RascaResultado>();
+            var resultadosSin = new List<RascaResultado>();
+
+            foreach (var nombre in nombresRascas)
+            {
+                foreach (var precio in precios)
+                {
+                    var precioDecimal = decimal.Parse(precio);
+                    var serie = series[random.Next(series.Length)];
+                    var serieDecimal = decimal.Parse(serie.Replace(".", "").Replace(",", ""));
+
+                    // Simular rascas premiados (entre 100 y 50000)
+                    int rascasPremiados = random.Next(100, 50001);
+
+                    // Simular porcentaje de premio (entre 0.5 y 50 para que haya variedad)
+                    decimal porcentajeBase = (decimal)(random.NextDouble() * 49.5 + 0.5);
+                    decimal porcentaje = Math.Round(porcentajeBase, 2);
+
+                    var resultado = new RascaResultado
+                    {
+                        Nombre = nombre,
+                        Serie = serie,
+                        Precio = precio + "€",
+                        RascasPremiados = rascasPremiados,
+                        PorcentajePremio = porcentaje
+                    };
+
+                    resultadosCon.Add(resultado);
+
+                    // Versión "sin mismo valor" con porcentaje ligeramente diferente
+                    var resultadoSin = new RascaResultado
+                    {
+                        Nombre = nombre,
+                        Serie = serie,
+                        Precio = precio + "€",
+                        RascasPremiados = rascasPremiados - random.Next(50, 500),
+                        PorcentajePremio = Math.Round(porcentaje * (decimal)0.95, 2)
+                    };
+                    resultadosSin.Add(resultadoSin);
+                }
+            }
+
+            // Mezclar para que no estén ordenados
+            resultadosCon = resultadosCon.OrderBy(x => random.Next()).Take(60).ToList();
+            resultadosSin = resultadosSin.OrderBy(x => random.Next()).Take(60).ToList();
+
+            Console.WriteLine($"> Generando informe con {resultadosCon.Count} registros (con mismo valor)");
+            Console.WriteLine($"> Generando informe con {resultadosSin.Count} registros (sin mismo valor)");
+
+            // Genera informe HTML
+            var html = HtmlReportGenerator.GenerateReportHtml(resultadosCon, resultadosSin, precioMin);
+            var outPath = Path.Combine(Environment.CurrentDirectory, "onceinfo-report-debug.html");
+            File.WriteAllText(outPath, html, System.Text.Encoding.UTF8);
+
+            Console.WriteLine($"> Informe guardado: {outPath}");
+            Console.WriteLine("> Abriendo en navegador...");
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = outPath,
+                UseShellExecute = true
+            });
+
+            Console.WriteLine("> Presiona cualquier tecla para salir...");
+            Console.ReadKey();
+        }
+
         private static void ShowProgress(int progresoActual, int total, int size = 26)
         {
             int percent = (progresoActual * 100) / Math.Max(total, 1);
             int percentBar = (progresoActual * size) / Math.Max(total, 1);
             string progressBar = new string('█', percentBar) + new string('░', size - percentBar);
             Console.Write($"\r {progressBar} {percent}%");
-        }
-
-        private static void ReadParams(string[] args)
-        {
-            if (!args.Any()) return;
-
-            string conf = "";
-            foreach (string arg in args)
-            {
-                if (string.IsNullOrEmpty(conf))
-                {
-                    conf = arg;
-
-                    switch (conf)
-                    {
-                        case "/t":
-                            break;
-                        case "/nomin":
-                            conf = "";
-                            nomin = true;
-                            break;
-                        case "/euro":
-                            conf = "";
-                            euroGastado = true;
-                            break;
-                        case "/p":
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                else
-                {
-                    switch (conf)
-                    {
-                        case "/t":
-                            top = int.Parse(arg);
-                            break;
-                    }
-                    switch (conf)
-                    {
-                        case "/p":
-                            precioMin = int.Parse(arg);
-                            break;
-                    }
-
-                    conf = "";
-                }
-            }
         }
     }
 }
