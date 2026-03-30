@@ -4,6 +4,8 @@
 
 /OnceInfo/bin
 /OnceInfo/obj
+/OnceInfo.Tests/bin
+/OnceInfo.Tests/obj
 /.vs/
 /*.suo
 /*.user
