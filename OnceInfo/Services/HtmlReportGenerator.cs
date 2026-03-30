@@ -136,6 +136,8 @@ namespace OnceInfo.Services
             sb.AppendLine(".multiselect-option input { width: 14px; height: 14px; accent-color: var(--primary); }");
             sb.AppendLine(".multiselect-option label { cursor: pointer; text-transform: none; font-size: 0.8rem; color: var(--text-primary); }");
 
+            sb.AppendLine(".multiselect-dropdown.open#porcDropdown { min-width: 120px; }");
+
             sb.AppendLine(".info-tooltip { position: relative; display: inline-flex; align-items: center; cursor: help; margin-left: 2px; font-size: 0.8rem; }");
             sb.AppendLine(".info-tooltip::before {");
             sb.AppendLine("  content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);");
@@ -158,6 +160,21 @@ namespace OnceInfo.Services
             sb.AppendLine(".columns-dropdown.open { display: block; }");
             sb.AppendLine(".columns-option { display: flex; align-items: center; gap: 6px; padding: 4px 6px; cursor: pointer; }");
             sb.AppendLine(".columns-option input { accent-color: var(--primary); }");
+
+            sb.AppendLine(".col-btn { width: 40px; text-align: center; }");
+            sb.AppendLine(".info-tooltip-custom { position: relative; display: inline-flex; align-items: center; margin-left: 4px; }");
+            sb.AppendLine(".tooltip-trigger { cursor: help; opacity: 0.7; font-size: 0.8rem; }");
+            sb.AppendLine(".tooltip-trigger:hover { opacity: 1; }");
+            sb.AppendLine(".tooltip-content { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);");
+            sb.AppendLine("  background: var(--bg-table); color: var(--text-primary); padding: 8px 12px; border-radius: 6px;");
+            sb.AppendLine("  font-size: 0.75rem; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s;");
+            sb.AppendLine("  z-index: 200; margin-bottom: 8px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 4px; }");
+            sb.AppendLine(".info-tooltip-custom:hover .tooltip-content { opacity: 1; }");
+            sb.AppendLine(".tooltip-item { padding: 2px 6px; border-radius: 4px; }");
+            sb.AppendLine(".tooltip-item.low { background: rgba(239, 68, 68, 0.2); color: #f87171; }");
+            sb.AppendLine(".tooltip-item.medium-low { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }");
+            sb.AppendLine(".tooltip-item.medium-high { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }");
+            sb.AppendLine(".tooltip-item.high { background: rgba(16, 185, 129, 0.2); color: #34d399; }");
 
             sb.AppendLine(".table-wrapper { flex: 1; min-height: 0; display: flex; flex-direction: column; }");
             sb.AppendLine(".table-container { background: var(--bg-card); border-radius: 10px; border: 1px solid var(--border);");
@@ -182,12 +199,13 @@ namespace OnceInfo.Services
             sb.AppendLine(".badge-price { background: rgba(99, 102, 241, 0.2); color: var(--primary-light); }");
             sb.AppendLine(".badge-series { background: rgba(148, 163, 184, 0.2); color: var(--text-secondary); }");
             sb.AppendLine(".badge-percent.low { background: rgba(239, 68, 68, 0.2); color: #f87171; }");
-            sb.AppendLine(".badge-percent.medium { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }");
+            sb.AppendLine(".badge-percent.medium-low { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }");
+            sb.AppendLine(".badge-percent.medium-high { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }");
             sb.AppendLine(".badge-percent.high { background: rgba(16, 185, 129, 0.2); color: #34d399; }");
 
             sb.AppendLine(".empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); }");
 
-            sb.AppendLine("@media (max-width: 768px) {");
+            sb.AppendLine("@media (max-width: 950px) {");
             sb.AppendLine("  .header h1 { font-size: 1.4rem; }");
             sb.AppendLine("  .stats-grid { grid-template-columns: repeat(2, 1fr); }");
             sb.AppendLine("  .filters-row { flex-direction: column; align-items: stretch; }");
@@ -256,20 +274,24 @@ namespace OnceInfo.Services
 
             // Porcentaje
             sb.AppendLine("<div class=\"filter-group\">");
-            sb.AppendLine($"<label>Porcentaje <span class=\"info-tooltip\" data-tooltip=\"Q1: &lt;{q1:0.##}% | Q2: {q1:0.##}-{q2:0.##}% | Q3: {q2:0.##}-{q3:0.##}% | Q4: &gt;{q3:0.##}%\">ℹ️</span></label>");
+            sb.AppendLine("<label>Porcentaje <span class=\"info-tooltip-custom\"><span class=\"tooltip-trigger\">ℹ️</span>");
+            sb.AppendLine("<span class=\"tooltip-content\">");
+            sb.AppendLine($"<span class=\"tooltip-item low\">Bajo &lt;{q1:0.##}%</span>");
+            sb.AppendLine($"<span class=\"tooltip-item medium-low\">Medio-Bajo {q1:0.##}-{q2:0.##}%</span>");
+            sb.AppendLine($"<span class=\"tooltip-item medium-high\">Medio-Alto {q2:0.##}-{q3:0.##}%</span>");
+            sb.AppendLine($"<span class=\"tooltip-item high\">Alto &gt;{q3:0.##}%</span>");
+            sb.AppendLine("</span></span></label>");
             sb.AppendLine("<div class=\"multiselect-container\">");
             sb.AppendLine("<div class=\"multiselect-trigger\" id=\"porcTrigger\"><span class=\"selected-text\">Todos</span><span>▼</span></div>");
             sb.AppendLine("<div class=\"multiselect-dropdown\" id=\"porcDropdown\">");
-            sb.AppendLine("<div class=\"multiselect-option\" onclick=\"event.stopPropagation()\">");
-            sb.AppendLine("<input type=\"checkbox\" id=\"porc_all\" data-quartile=\"all\" checked><label for=\"porc_all\">Todos</label></div>");
             sb.AppendLine($"<div class=\"multiselect-option\" onclick=\"event.stopPropagation()\">");
-            sb.AppendLine($"<input type=\"checkbox\" id=\"porc_q1\" data-quartile=\"q1\"><label for=\"porc_q1\">Bajo (&lt;{q1:0.##}%)</label></div>");
+            sb.AppendLine($"<input type=\"checkbox\" id=\"porc_q1\" data-quartile=\"q1\" checked><label for=\"porc_q1\">Bajo</label></div>");
             sb.AppendLine($"<div class=\"multiselect-option\" onclick=\"event.stopPropagation()\">");
-            sb.AppendLine($"<input type=\"checkbox\" id=\"porc_q2\" data-quartile=\"q2\"><label for=\"porc_q2\">Medio-Bajo</label></div>");
+            sb.AppendLine($"<input type=\"checkbox\" id=\"porc_q2\" data-quartile=\"q2\" checked><label for=\"porc_q2\">Medio-Bajo</label></div>");
             sb.AppendLine($"<div class=\"multiselect-option\" onclick=\"event.stopPropagation()\">");
-            sb.AppendLine($"<input type=\"checkbox\" id=\"porc_q3\" data-quartile=\"q3\"><label for=\"porc_q3\">Medio-Alto</label></div>");
+            sb.AppendLine($"<input type=\"checkbox\" id=\"porc_q3\" data-quartile=\"q3\" checked><label for=\"porc_q3\">Medio-Alto</label></div>");
             sb.AppendLine($"<div class=\"multiselect-option\" onclick=\"event.stopPropagation()\">");
-            sb.AppendLine($"<input type=\"checkbox\" id=\"porc_q4\" data-quartile=\"q4\"><label for=\"porc_q4\">Alto (&gt;{q3:0.##}%)</label></div>");
+            sb.AppendLine($"<input type=\"checkbox\" id=\"porc_q4\" data-quartile=\"q4\" checked><label for=\"porc_q4\">Alto</label></div>");
             sb.AppendLine("</div></div></div>");
 
             // Rascas Premiados
@@ -290,17 +312,6 @@ namespace OnceInfo.Services
             sb.AppendLine("<button class=\"btn\" id=\"exportCsv\">CSV</button>");
             sb.AppendLine("</div></div>");
 
-            // Columnas
-            sb.AppendLine("<div class=\"filter-group\">");
-            sb.AppendLine("<label>&nbsp;</label>");
-            sb.AppendLine("<div class=\"columns-toggle\">");
-            sb.AppendLine("<button class=\"btn btn-secondary btn-icon\" id=\"columnsBtn\">☰</button>");
-            sb.AppendLine("<div class=\"columns-dropdown\" id=\"columnsDropdown\">");
-            sb.AppendLine("<div class=\"columns-option\"><input type=\"checkbox\" id=\"col_serie\" checked><label for=\"col_serie\">Serie</label></div>");
-            sb.AppendLine("<div class=\"columns-option\"><input type=\"checkbox\" id=\"col_precio\" checked><label for=\"col_precio\">Precio</label></div>");
-            sb.AppendLine("<div class=\"columns-option\"><input type=\"checkbox\" id=\"col_rascas\" checked><label for=\"col_rascas\">Rascas</label></div>");
-            sb.AppendLine("</div></div></div>");
-
             sb.AppendLine("</div></div></div>");
 
             // Table
@@ -315,6 +326,13 @@ namespace OnceInfo.Services
             sb.AppendLine("<th data-sort=\"precio\" id=\"th_precio\">Precio</th>");
             sb.AppendLine("<th data-sort=\"rascas\" id=\"th_rascas\">Rascas</th>");
             sb.AppendLine("<th data-sort=\"porcentaje\" class=\"sorted-desc\">Porcentaje</th>");
+            sb.AppendLine("<th class=\"col-btn\"><div class=\"columns-toggle\">");
+            sb.AppendLine("<button class=\"btn btn-secondary btn-icon\" id=\"columnsBtn\">☰</button>");
+            sb.AppendLine("<div class=\"columns-dropdown\" id=\"columnsDropdown\">");
+            sb.AppendLine("<div class=\"columns-option\"><input type=\"checkbox\" id=\"col_serie\" checked><label for=\"col_serie\">Serie</label></div>");
+            sb.AppendLine("<div class=\"columns-option\"><input type=\"checkbox\" id=\"col_precio\" checked><label for=\"col_precio\">Precio</label></div>");
+            sb.AppendLine("<div class=\"columns-option\"><input type=\"checkbox\" id=\"col_rascas\" checked><label for=\"col_rascas\">Rascas</label></div>");
+            sb.AppendLine("</div></div></th>");
             sb.AppendLine("</tr></thead><tbody>");
 
             void WriteRows(IEnumerable<RascaResultado> list, string mode)
@@ -329,7 +347,7 @@ namespace OnceInfo.Services
                     string serieEsc = WebUtility.HtmlEncode(r.Serie);
                     string porcent = r.PorcentajePremio.ToString("0.##", CultureInfo.InvariantCulture);
 
-                    string badgeClass = r.PorcentajePremio < q1 ? "low" : r.PorcentajePremio > q3 ? "high" : "medium";
+                    string badgeClass = r.PorcentajePremio < q1 ? "low" : r.PorcentajePremio <= q2 ? "medium-low" : r.PorcentajePremio <= q3 ? "medium-high" : "high";
                     string quartile = r.PorcentajePremio < q1 ? "q1" : r.PorcentajePremio <= q2 ? "q2" : r.PorcentajePremio <= q3 ? "q3" : "q4";
                     string rascasQuartile = r.RascasPremiados < rascasQ1 ? "low" : r.RascasPremiados > rascasQ3 ? "top" : "mid";
 
@@ -391,7 +409,10 @@ namespace OnceInfo.Services
             sb.AppendLine("    const textEl = trigger.querySelector('.selected-text');");
             sb.AppendLine("    if (checked.length === 0) textEl.textContent = 'Ninguno';");
             sb.AppendLine("    else if (checked.length === checkboxes.length) textEl.textContent = 'Todos';");
-            sb.AppendLine("    else textEl.textContent = checked.length + ' sel.';");
+            sb.AppendLine("    else if (checked.length <= 2) {");
+            sb.AppendLine("      const labels = checked.map(function(cb) { return cb.nextElementSibling.textContent; });");
+            sb.AppendLine("      textEl.textContent = labels.join(', ');");
+            sb.AppendLine("    } else textEl.textContent = checked.length + ' sel.';");
             sb.AppendLine("  }");
 
             sb.AppendLine("  setupMultiselect('priceTrigger', 'priceDropdown');");
@@ -411,7 +432,7 @@ namespace OnceInfo.Services
             sb.AppendLine("  });");
 
             // Mobile columns
-            sb.AppendLine("  if (window.innerWidth < 768) {");
+            sb.AppendLine("  if (window.innerWidth < 950) {");
             sb.AppendLine("    ['col_serie', 'col_precio', 'col_rascas'].forEach(function(col) {");
             sb.AppendLine("      document.getElementById(col).checked = false;");
             sb.AppendLine("      document.querySelectorAll('td.' + col).forEach(function(el) { el.classList.add('hidden-col'); });");
@@ -425,10 +446,9 @@ namespace OnceInfo.Services
             sb.AppendLine("    });");
             sb.AppendLine("  }");
             sb.AppendLine("  function getSelectedQuartiles() {");
-            sb.AppendLine("    if (document.getElementById('porc_all').checked) return ['q1', 'q2', 'q3', 'q4'];");
             sb.AppendLine("    return Array.from(document.querySelectorAll('#porcDropdown input:checked')).map(function(cb) {");
             sb.AppendLine("      return cb.dataset.quartile;");
-            sb.AppendLine("    }).filter(function(q) { return q && q !== 'all'; });");
+            sb.AppendLine("    });");
             sb.AppendLine("  }");
 
             sb.AppendLine("  function applyFilters() {");
@@ -502,7 +522,7 @@ namespace OnceInfo.Services
                 sb.AppendLine("    modeSelect.value = 'sin';");
             sb.AppendLine("    premSelect.value = 'all';");
             sb.AppendLine("    document.querySelectorAll('#priceDropdown input').forEach(function(cb) { cb.checked = true; });");
-            sb.AppendLine("    document.querySelectorAll('#porcDropdown input').forEach(function(cb) { cb.checked = cb.id === 'porc_all'; });");
+            sb.AppendLine("    document.querySelectorAll('#porcDropdown input').forEach(function(cb) { cb.checked = true; });");
             sb.AppendLine("    document.querySelector('#priceTrigger .selected-text').textContent = 'Todos';");
             sb.AppendLine("    document.querySelector('#porcTrigger .selected-text').textContent = 'Todos';");
             sb.AppendLine("    applyFilters();");
