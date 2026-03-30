@@ -73,7 +73,7 @@ namespace OnceInfo.Tests
         }
 
         [TestMethod]
-        public void GenerateReportHtml_ConPrecioMin_IncluyeEnTitulo()
+        public void GenerateReportHtml_ConPrecioMin_MuestraEnStats()
         {
             // Arrange
             var resultados = new List<RascaResultado>();
@@ -82,7 +82,8 @@ namespace OnceInfo.Tests
             var html = HtmlReportGenerator.GenerateReportHtml(resultados, resultados, 5);
 
             // Assert
-            Assert.IsTrue(html.Contains("Premios a partir de 5"));
+            Assert.IsTrue(html.Contains("5€"));
+            Assert.IsTrue(html.Contains("Premio Mín."));
         }
 
         [TestMethod]
@@ -125,10 +126,11 @@ namespace OnceInfo.Tests
             // Act
             var html = HtmlReportGenerator.GenerateReportHtml(resultados, resultados, 0);
 
-            // Assert - Verificar que "Alto" aparece antes que "Medio" y "Medio" antes que "Bajo"
-            var posicionAlto = html.IndexOf("Alto");
-            var posicionMedio = html.IndexOf("Medio");
-            var posicionBajo = html.IndexOf("Bajo");
+            // Assert - Verificar que los nombres aparecen en orden descendente en la tabla
+            // Buscar específicamente en las filas de datos (data-nombre)
+            var posicionAlto = html.IndexOf("data-nombre=\"Alto\"");
+            var posicionMedio = html.IndexOf("data-nombre=\"Medio\"");
+            var posicionBajo = html.IndexOf("data-nombre=\"Bajo\"");
 
             Assert.IsTrue(posicionAlto < posicionMedio, "Alto debe aparecer antes que Medio");
             Assert.IsTrue(posicionMedio < posicionBajo, "Medio debe aparecer antes que Bajo");
