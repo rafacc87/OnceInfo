@@ -226,7 +226,7 @@ namespace OnceInfo
                 "Rasca Ruby", "Rasca Sapphire", "Rasca Bronze", "Rasca Silver"
             };
 
-            var precios = new[] { "1", "2", "3", "5", "10" };
+            var precios = new[] { "1", "2", "3", "5", "10","0.5", "0.25" };
             var series = new[] { "50.000", "100.000", "200.000", "500.000", "1.000.000" };
 
             var resultadosCon = new List<RascaResultado>();

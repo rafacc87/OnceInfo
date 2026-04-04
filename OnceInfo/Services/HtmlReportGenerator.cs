@@ -45,10 +45,17 @@ namespace OnceInfo.Services
                 .ToList();
 
             var uniquePrices = allResults
-                .Select(r => r.Precio?.Replace("€", "").Trim())
-                .Where(p => !string.IsNullOrEmpty(p))
+                .Select(r => r.Precio)
+                .Where(p => p != null)
+                .Select(p =>
+                {
+                    if (string.IsNullOrEmpty(p)) return 0;
+                    var clean = p.Replace("€", "").Replace(".", ",").Trim();
+                    if (decimal.TryParse(clean, out decimal val)) return val;
+                    return 0;
+                })
                 .Distinct()
-                .OrderBy(p => decimal.TryParse(p?.Replace(",", "."), out decimal val) ? val : 0)
+                .OrderBy(p => p)
                 .ToList();
 
             var percentages = allResults.Select(r => r.PorcentajePremio).ToList();
@@ -265,7 +272,7 @@ namespace OnceInfo.Services
             sb.AppendLine("<div class=\"multiselect-dropdown\" id=\"priceDropdown\">");
             foreach (var price in uniquePrices)
             {
-                var priceKey = price?.Replace(",", ".").Replace(" ", "") ?? "";
+                var priceKey = price.ToString().Replace(",", ".").Replace(" ", "") ?? "";
                 sb.AppendLine($"<div class=\"multiselect-option\" onclick=\"event.stopPropagation()\">");
                 sb.AppendLine($"<input type=\"checkbox\" id=\"price_{priceKey}\" data-price=\"{priceKey}\" checked>");
                 sb.AppendLine($"<label for=\"price_{priceKey}\">{price}€</label></div>");
